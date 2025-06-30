@@ -1,0 +1,39 @@
+# 🐍 Caches Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# 📦 Données statiques ou de test
+*.csv
+*.tsv
+*.json
+
+# 🪵 Logs et fichiers temporaires
+*.log
+*.tmp
+*.bak
+
+# 🔐 Fichiers de configuration / secrets
+.env
+*.env
+.env.*
+condaenv.*.requirements.txt
+
+
+# 🐍 Environnements virtuels
+.venv/
+env/
+venv/
+
+# 🐳 Docker
+docker_env/
+
+# 🖥️ Fichiers système
+.DS_Store
+Thumbs.db
+
+# 🧠 IDEs & éditeurs
+.vscode/
+.idea/
+*.swp
