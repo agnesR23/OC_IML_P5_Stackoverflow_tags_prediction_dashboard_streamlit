@@ -2,6 +2,14 @@ import streamlit as st
 import pandas as pd
 import requests
 import os
+import numpy as np
+import ast
+from utils import (
+    coverage_score_true_pred,
+    precision_at_k_true_pred,
+    coverage_score,
+    precision_at_k,
+)
 
 # --------- Config ---------
 st.set_page_config(
@@ -10,7 +18,12 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-API_URL = os.getenv("API_URL", "http://flask_app:5001/predict")
+# URL de l'API Flask:
+if os.getenv("DOCKERIZED", "0") == "1":
+    API_URL = "http://flask_app:5001/predict"
+else:
+    API_URL = "http://localhost:5001/predict"
+
 DATA_PATH = "test_data.csv"
 DEFAULT_THRESHOLD = 0.5
 NUM_EXAMPLES = 5  # pour afficher 5 exemples du test_data
@@ -23,13 +36,15 @@ def load_test_data():
 df_test = load_test_data()
 
 # --------- Fonction pour appeler l'API ---------
-def call_api_predict(title, body, threshold, model_type):
+def call_api_predict(title, body, threshold, model_type, true_tags=None):
     payload = {
         "title": title,
         "body": body,
         "threshold": threshold,
         "model_type": model_type
     }
+    if true_tags is not None:
+        payload["true_tags"] = true_tags
     try:
         response = requests.post(API_URL, json=payload)
         if response.status_code == 200:
@@ -42,8 +57,9 @@ def call_api_predict(title, body, threshold, model_type):
 # --------- Titre et description ---------
 st.title("🔍 Prédiction automatique de tags Stack Overflow")
 st.markdown("""
-# 
-Ce dashboard permet de prédire automatiquement les tags les plus pertinents pour une question Stack Overflow, à partir de son **titre** et de sa **description**.
+Ce dashboard, réalisé par **Agnès Regaud**, est le **5ᵉ projet** de la filière **Ingénieur Machine Learning** d'OpenClassrooms.
+
+Il permet de prédire automatiquement les tags les plus pertinents pour une question Stack Overflow, à partir de son **titre** et de sa **description**.
 
 ---
 
@@ -53,7 +69,14 @@ Aider les utilisateurs à mieux taguer leurs questions techniques sur Stack Over
 - 🧪 **Modèle non supervisé (NMF)** : extrait des thématiques dominantes pour suggérer des tags probables, même sans apprentissage supervisé.
 
 ---
+            
+## 📊 Définitions des métriques d’évaluation :
 
+- **Couverture** : proportion de questions où au moins un tag correct est prédit.  
+- **Précision@3** : proportion des 3 premiers tags prédits qui sont corrects.
+
+---
+            
 ## ✨ Fonctionnalités
 Ce dashboard propose deux modes d’utilisation :
 
@@ -68,12 +91,32 @@ Soumettez votre propre question (titre + description) pour obtenir une prédicti
 """)
 
 
-st.subheader("📌 Exemples issus du jeu de test")
+st.subheader("📌 Partie 1 – Exemples issus du jeu de test : choisissez avec la barre de gauche")
 
 # --------- Affichage des exemples ---------
 
+def render_tags_as_badges(tag_list):
+    badges = " ".join([
+        f"<span style='background-color:#e8ddff; border-radius:12px; padding:6px 12px; margin:4px; display:inline-block; color:#3c0066; font-weight:500;'>{tag}</span>"
+        for tag in tag_list
+    ])
+    return f"<div style='font-size:18px; line-height:2.2;'>{badges}</div>"
+
+def render_tags_simple(label, tags):
+    if isinstance(tags, str):
+        tags = tags.strip("[]").replace("'", "").split(", ")
+    badges = " ".join([
+        f"<span style='color:#2f4f2f; font-weight:600; padding:4px 10px; border-radius:12px; background-color:#b6d7a8; margin:4px 6px 4px 0; display:inline-block;'>{tag}</span>"
+        for tag in tags if tag
+    ])
+    return f"""
+    <div style='font-size:16px; font-weight:bold; color:#000; margin-bottom:4px;'>{label} :</div>
+    <div>{badges}</div>
+    """
+
+
 def render_text_area_custom(text, height=150):
-    return st.markdown(f"""
+    html = f"""
     <div style="
         white-space: pre-wrap;
         background-color: #f5f7fa;  /* fond très pâle, légèrement bleu-gris */
@@ -87,58 +130,87 @@ def render_text_area_custom(text, height=150):
         font-size: 15px;
         line-height: 1.4;
     ">{text}</div>
+    """
+    return html
+
+
+st.sidebar.markdown("""
+    <h2>📚 Exemples prédéfinis</h2>
+    <p style="font-size:14px; line-height:1.4;">
+        Choisissez un exemple dans la liste pour afficher ses détails, son titre, sa description, et les tags prédits par les modèles.
+    </p>
     """, unsafe_allow_html=True)
-
-for i in range(min(NUM_EXAMPLES, len(df_test))):
-    st.markdown(f"### Exemple {i+1}")
-    question_text = df_test.loc[i, "title_body"]
-    st.markdown("""
-        <div style="
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 6px;
-            font-size: 16px;
-        ">
-        📝 Question (title + body)
-        </div>
-    """, unsafe_allow_html=True)
-
-    render_text_area_custom(question_text, height=150)
+ex_index = st.sidebar.slider("Choisissez un exemple", 0, len(df_test)-1, 0)
 
 
-    st.markdown(f"🗂️ Tous les tags d'origine (TagsList) : `{df_test.loc[i, 'TagsList']}`")
-    st.markdown(f"✅ Tags retenus (FilteredTags) parmi les 50 plus fréquents : `{df_test.loc[i, 'FilteredTags']}`")
+i = ex_index
 
-    # Prédiction CatBoost
-    res_catboost = call_api_predict(title="", body=question_text, threshold=DEFAULT_THRESHOLD, model_type="catboost")
-    if "error" not in res_catboost:
+st.markdown(f"### Exemple {i+1}")
+
+    
+st.markdown("**Titre :**")
+st.markdown(render_text_area_custom(df_test.loc[i, "Title"], height=40), unsafe_allow_html=True)
+st.markdown("**Question :**")
+st.markdown(render_text_area_custom(df_test.loc[i, "Body"], height=110), unsafe_allow_html=True)
+
+
+st.markdown(render_tags_simple("🗂️ Tous les tags d'origine (TagsList)", df_test.loc[i, 'TagsList']), unsafe_allow_html=True)
+st.markdown(render_tags_simple("✅ Tags retenus (FilteredTags)", df_test.loc[i, 'FilteredTags']), unsafe_allow_html=True)
+
+
+true_tags_raw = df_test.loc[i, "FilteredTags"]
+try:
+    true_tags = ast.literal_eval(true_tags_raw) if isinstance(true_tags_raw, str) else true_tags_raw
+except Exception:
+    true_tags = []
+
+
+# Prédiction CatBoost
+res_catboost = call_api_predict(
+    title=df_test.loc[i, "Title"],
+    body=df_test.loc[i, "Body"],
+    threshold=DEFAULT_THRESHOLD,
+    model_type="catboost",
+    true_tags=true_tags
+)
+if "error" not in res_catboost:
+    with st.expander("📎 Afficher les prédictions CatBoost"):
+        st.markdown("<div style='font-size:18px; font-weight:bold; color:#000; margin-bottom:8px;'>Tags prédits (CatBoost) et métriques</div>", unsafe_allow_html=True)
         tags_cat = res_catboost["predicted_tags"]
-        st.markdown(f"📎 Tags prédits (CatBoost) : `{tags_cat}`")
-    else:
-        st.error(f"Erreur CatBoost: {res_catboost['error']}")
+        st.markdown(render_tags_as_badges(tags_cat), unsafe_allow_html=True)
+        coverage_cat = res_catboost.get("coverage", None)
+        precision_cat = res_catboost.get("precision_at_3", None)
+        if coverage_cat is not None and precision_cat is not None:
+            st.markdown(f"📊 Couverture : {coverage_cat:.2f} | Precision@3 : {precision_cat:.2f}")
 
-    # Prédiction NMF
-    res_nmf = call_api_predict(title="", body=question_text, threshold=DEFAULT_THRESHOLD, model_type="nmf")
-    if "error" not in res_nmf:
+
+else:
+    st.error(f"Erreur CatBoost: {res_catboost['error']}")
+
+# Prédiction NMF
+res_nmf = call_api_predict(
+    title=df_test.loc[i, "Title"],
+    body=df_test.loc[i, "Body"],
+    threshold=DEFAULT_THRESHOLD,
+    model_type="nmf"
+)
+if "error" not in res_nmf:
+    with st.expander("📎 Afficher les prédictions"):
+        st.markdown("<div style='font-size:18px; font-weight:bold; color:#000; margin-bottom:8px;'>Tags prédits (NMF) et métriques</div>", unsafe_allow_html=True)
         tags_nmf = res_nmf["predicted_tags"]
-        st.markdown(f"📎 Tags prédits (NMF) : `{tags_nmf}`")
-    else:
-        st.error(f"Erreur NMF: {res_nmf['error']}")
+        st.markdown(render_tags_as_badges(tags_nmf), unsafe_allow_html=True)
+        coverage_nmf = coverage_score_true_pred([df_test.loc[i, "FilteredTags"]], [tags_nmf])
+        precision_nmf = precision_at_k_true_pred([df_test.loc[i, "FilteredTags"]], [tags_nmf], k=3)
+        st.markdown(f"📊 Couverture : {coverage_nmf:.2f} | Precision@3 : {precision_nmf:.2f}")
+else:
+    st.error(f"Erreur NMF: {res_nmf['error']}")
 
-    st.divider()
+st.divider()
 
 # --------- Entrée manuelle ---------
-def render_tags_as_badges(tag_list):
-    badges = " ".join([
-        f"<span style='background-color:#e8ddff; border-radius:12px; padding:6px 12px; margin:4px; display:inline-block; color:#3c0066; font-weight:500;'>{tag}</span>"
-        for tag in tag_list
-    ])
-    return f"<div style='font-size:18px; line-height:2.2;'>{badges}</div>"
 
 
-
-
-st.subheader("✍️ Tester votre propre question")
+st.subheader("✍️ Partie 2 – Tester votre propre question")
 
 with st.form("manual_input"):
     title = st.text_input("Titre de la question")
@@ -163,7 +235,7 @@ with st.form("manual_input"):
                 else:
                     st.markdown(
                                 f"<div style='background-color:#f9d342; color:#5a3e00; padding:10px; border-radius:6px; font-weight:bold;'>"
-                                f"⚠️ Aucun tag prédit (Catbbost) avec un seuil ≥ {threshold}."
+                                f"⚠️ Aucun tag prédit (CatBoost) avec un seuil ≥ {threshold}."
                                 "</div>", unsafe_allow_html=True
                                 )                  
                 st.markdown("**📊 Scores associés (CatBoost)**")
