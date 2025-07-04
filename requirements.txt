@@ -1,6 +1,6 @@
 # Dépendances pour streamlit Community :
-streamlit==1.24.1
-requests==2.32.3
+streamlit==1.37.0
+requests==2.32.4
 pandas==2.3.0
-scikit-learn==1.0.2
+scikit-learn==1.5.0
 numpy==1.26.4
