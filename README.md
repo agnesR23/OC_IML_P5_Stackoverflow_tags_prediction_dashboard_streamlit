@@ -16,7 +16,7 @@ Fournir une interface simple et conviviale pour :
 ## 📁 Contenu du répertoire
 
 - `main.py` : script principal de l’app Streamlit
-- `.env` : fichier contenant l’URL de l’API Flask (modifiable)
+- `.env` : fichier contenant l’URL de l’API Flask : non versionné 
 - `environment.yml` : dépendances conda de l’interface
 - `Dockerfile` : configuration pour créer l’image Docker de l’application
 - `utils.py` : fonctions utilitaires partagées (normalisation, métriques, etc.)
@@ -29,11 +29,12 @@ conda env create -f environment.yml
 conda activate streamlit_env
 streamlit run main.py
 
-Important : Vérifie que le fichier .env contient bien l’URL correcte de l’API Flask, par exemple :
-API_URL=http://localhost:5001/predict
+Important : Avant de lancer l’application, créez un fichier `.env` à la racine du répertoire avec le contenu suivant à adapter si besoin :
+API_URL=http://flask_app:5001/predict
+DOCKERIZED=1
 
 🐳 Lancement avec Docker
-docker build -t app_streamlit .
+docker build -t app_streamlit
 docker run -p 8501:8501 --env-file .env app_streamlit
 
 💡 Fonctionnalités
