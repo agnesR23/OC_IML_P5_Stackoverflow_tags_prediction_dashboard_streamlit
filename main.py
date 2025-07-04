@@ -19,10 +19,13 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 # URL de l'API Flask:
-if os.getenv("DOCKERIZED", "0") == "1":
+if os.getenv("STREAMLIT_CLOUD", "0") == "1":
+    API_URL = "https://ton-api-flask-sur-aws-ou-autre/predict"
+elif os.getenv("DOCKERIZED", "0") == "1":
     API_URL = "http://flask_app:5001/predict"
 else:
     API_URL = "http://localhost:5001/predict"
+
 
 DATA_PATH = "test_data.csv"
 DEFAULT_THRESHOLD = 0.5

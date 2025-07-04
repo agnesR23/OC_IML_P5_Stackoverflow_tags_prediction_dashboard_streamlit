@@ -1,0 +1,2 @@
+[env]
+STREAMLIT_CLOUD = "1"

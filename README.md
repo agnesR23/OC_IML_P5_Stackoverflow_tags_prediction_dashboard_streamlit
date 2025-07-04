@@ -30,12 +30,28 @@ conda activate streamlit_env
 streamlit run main.py
 
 Important : Avant de lancer l’application, créez un fichier `.env` à la racine du répertoire avec le contenu suivant à adapter si besoin :
+API dockérisée en local :
+API_URL=http://flask_app:5001/predict
+DOCKERIZED=1
+ou en local simple :
+API_URL=http://localhost:5001/predict  
+DOCKERIZED=0
+
+## ▶️ Lancement avec Docker :
+docker build -t app_streamlit
+docker run -p 8501:8501 --env-file .env app_streamlit
+Et dans .env : 
 API_URL=http://flask_app:5001/predict
 DOCKERIZED=1
 
-🐳 Lancement avec Docker
-docker build -t app_streamlit
-docker run -p 8501:8501 --env-file .env app_streamlit
+ou avec Docker-compose :
+docker-compose up --build  
+
+## ▶️ Cas déploiement Streamlit Community par exemple (API Flask sur cloud) :
+Dans .env :
+API_URL=https://votre-api-flask-sur-le-cloud/predict  
+STREAMLIT_CLOUD=1  
+
 
 💡 Fonctionnalités
 - Envoi d’une question (titre + description) à l’API Flask
