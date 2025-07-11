@@ -22,7 +22,7 @@ st.set_page_config(
 API_URL = os.getenv("API_URL")
 if not API_URL:
     if os.getenv("STREAMLIT_CLOUD", "0") == "1":
-        API_URL = "https://ton-api-flask-sur-aws-ou-autre/predict"
+        API_URL = "http://15.188.207.43:5001/predict"
     elif os.getenv("DOCKERIZED", "0") == "1":
         API_URL = "http://flask_app:5001/predict"
     else:
