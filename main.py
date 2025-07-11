@@ -18,16 +18,19 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-# URL de l'API Flask:
+# --------- URL de l'API Flask ---------
 API_URL = os.getenv("API_URL")
+
 if not API_URL:
-    if os.getenv("STREAMLIT_CLOUD", "0") == "1":
+    if "STREAMLIT_SERVER_RUN_ON_SAVE" in os.environ:
+        # On est sur Streamlit Cloud
         API_URL = "http://15.188.207.43:5001/predict"
     elif os.getenv("DOCKERIZED", "0") == "1":
+        # On est dans Docker
         API_URL = "http://flask_app:5001/predict"
     else:
+        # Par défaut en local
         API_URL = "http://localhost:5001/predict"
-
 
 
 
