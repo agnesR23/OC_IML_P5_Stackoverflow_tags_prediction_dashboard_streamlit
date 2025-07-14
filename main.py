@@ -150,10 +150,10 @@ st.sidebar.markdown("""
         Choisissez un exemple dans la liste pour afficher ses détails, son titre, sa description, et les tags prédits par les modèles.
     </p>
     """, unsafe_allow_html=True)
-ex_index = st.sidebar.slider("Choisissez un exemple", 0, len(df_test)-1, 0)
+options = df_test.index.tolist()
+labels = [f"{i+1} – {row['Title'][:50]}…" for i, row in df_test.iterrows()]
+i = st.sidebar.selectbox("Choisissez un exemple", options, format_func=lambda idx: labels[idx])
 
-
-i = ex_index
 
 st.markdown(f"### Exemple {i+1}")
 
