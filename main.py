@@ -151,7 +151,7 @@ st.sidebar.markdown("""
     </p>
     """, unsafe_allow_html=True)
 options = df_test.index.tolist()
-labels = [f"{i+1} – {row['Title'][:50]}…" for i, row in df_test.iterrows()]
+labels = [f"{i+1} – {row['Title'][:100]}…" for i, row in df_test.iterrows()]
 i = st.sidebar.selectbox("Choisissez un exemple", options, format_func=lambda idx: labels[idx])
 
 
