@@ -8,6 +8,7 @@ __pycache__/
 *.csv
 *.tsv
 *.json
+!config.json
 
 # 🪵 Logs et fichiers temporaires
 *.log
