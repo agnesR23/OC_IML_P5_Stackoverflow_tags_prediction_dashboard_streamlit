@@ -154,15 +154,17 @@ def coverage_score(y_true, y_pred):
             correct += 1
     return correct / len(y_true)
 
-def precision_at_k(y_true, y_pred, k=3):
-    """Precision@k : proportion de vrais tags parmi les k meilleurs prédits."""
+def precision_at_k(y_true, y_pred_probs, k=5):
+    """Precision@k : proportion de vrais tags parmi les k meilleurs prédits (ou moins si moins prédits)."""
     precisions = []
     for i in range(len(y_true)):
-        pred_top_k = np.argsort(y_pred[i])[::-1][:k]
+        pred_top_k = np.argsort(y_pred_probs[i])[::-1][:k]
         true_indices = np.where(y_true[i])[0]
+        denom = len(pred_top_k) if len(pred_top_k) > 0 else 1
         intersect = len(set(pred_top_k) & set(true_indices))
-        precisions.append(intersect / k)
+        precisions.append(intersect / denom)
     return np.mean(precisions)
+
 
 
 def jaccard_score_multilabel(y_true, y_pred):
@@ -183,21 +185,23 @@ def coverage_score_true_pred(y_true, y_pred):
             correct += 1
     return correct / len(y_true)
 
-def precision_at_k_true_pred(y_true, y_pred, k=3):
-    """Precision@k : proportion de vrais tags parmi les k premiers prédits."""
+def precision_at_k_true_pred(y_true, y_pred, k=5):
     precisions = []
     for true_tags, pred_tags in zip(y_true, y_pred):
-        pred_top_k = pred_tags[:k]
-        intersect = len(set(pred_top_k) & set(true_tags))
-        precisions.append(intersect / k)
+        top_k = pred_tags[:k] if len(pred_tags) >= k else pred_tags
+        denom = len(top_k) if top_k else 1
+        intersect = len(set(top_k) & set(true_tags))
+        precisions.append(intersect / denom)
     return sum(precisions) / len(precisions)
+
 
 def f1_at_k(p, r):
     return 2 * p * r / (p + r) if (p + r) > 0 else 0.0
 
-def compute_row_scores(true_tags, pred_tags, k=3):
-    pred_top_k = pred_tags[:k]
-    precision = len(set(pred_top_k) & set(true_tags)) / k
-    recall = len(set(pred_top_k) & set(true_tags)) / len(true_tags) if true_tags else 0.0
+def compute_row_scores(true_tags, pred_tags, k=5):
+    top_k = pred_tags[:k] if len(pred_tags) >= k else pred_tags
+    denom = len(top_k) if top_k else 1
+    precision = len(set(top_k) & set(true_tags)) / denom
+    recall = len(set(top_k) & set(true_tags)) / len(true_tags) if true_tags else 0.0
     f1 = f1_at_k(precision, recall)
     return precision, recall, f1
