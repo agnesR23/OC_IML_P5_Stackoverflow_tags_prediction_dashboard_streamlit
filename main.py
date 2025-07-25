@@ -195,6 +195,7 @@ if "error" not in res_catboost:
         st.markdown("<div style='font-size:18px; font-weight:bold; color:#000; margin-bottom:8px;'>Tags prédits (CatBoost) et métriques</div>", unsafe_allow_html=True)
         tags_cat = res_catboost["predicted_tags"]
         st.markdown(render_tags_as_badges(tags_cat), unsafe_allow_html=True)
+        st.write("Debug réponse CatBoost:", res_catboost) 
         coverage_cat = res_catboost.get("coverage", None)
         precision_cat = res_catboost.get("precision", None)
         if coverage_cat is not None and precision_cat is not None:
