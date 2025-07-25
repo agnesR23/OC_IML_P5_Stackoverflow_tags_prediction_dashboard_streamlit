@@ -88,7 +88,7 @@ Aider les utilisateurs à mieux taguer leurs questions techniques sur Stack Over
 ## 📊 Définitions des métriques d’évaluation :
 
 - **Couverture** : proportion de questions où au moins un tag correct est prédit.  
-- **Précision@3** : proportion des 3 premiers tags prédits qui sont corrects.
+- **Précision@5** : proportion des 5 premiers tags prédits qui sont corrects.
 **Remarque** : Toutes les métriques sont calculées par rapport aux *tags filtrés* (`FilteredTags`), qui constituent l'ensemble de référence pour l'entraînement et l'évaluation du modèle.
 
 
