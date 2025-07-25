@@ -45,12 +45,12 @@ docker-compose up --build
 
 Le fichier config.json versionné contient l’URL publique de l’API Flask (exposée sur AWS ECS Fargate).
 
-Après chaque redéploiement de l’API Flask, lance le script :
+Après chaque redéploiement de l’API Flask, lancer le script :
 
-export AWS_PROFILE=local-docker-user
 python3 update_config.py
 
-→ Cela mettra à jour config.json, commitera et poussera la bonne URL.
+# (Pensez à utiliser un profil AWS ayant les droits ECS.)
+# Cela met à jour config.json et pousse la nouvelle URL.
 
 Streamlit Cloud rebuildera automatiquement avec la nouvelle configuration.
 
