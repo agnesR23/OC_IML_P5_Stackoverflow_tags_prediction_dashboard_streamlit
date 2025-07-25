@@ -3,6 +3,12 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import f1_score, hamming_loss, jaccard_score
 
+def load_config(config_path="config/config.json"):
+    """Load configuration from JSON file."""
+    with open(config_path, "r") as f:
+        config = json.load(f)
+    return config
+
 # =============================================================
 # Fonction de normalisation du texte
 # =============================================================

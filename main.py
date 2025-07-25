@@ -9,7 +9,11 @@ from utils import (
     precision_at_k_true_pred,
     coverage_score,
     precision_at_k,
+    load_config
 )
+
+
+config = load_config(config_path="config.json")
 
 # --------- Config ---------
 st.set_page_config(
@@ -24,7 +28,8 @@ API_URL = os.getenv("API_URL")
 if not API_URL:
     if "STREAMLIT_SERVER_RUN_ON_SAVE" in os.environ:
         # On est sur Streamlit Cloud
-        API_URL = "http://15.188.207.43:5001/predict"
+        #API_URL = "http://15.188.207.43:5001/predict"
+        API_URL = config["URL_API"]
     elif os.getenv("DOCKERIZED", "0") == "1":
         # On est dans Docker
         API_URL = "http://flask_app:5001/predict"
@@ -84,6 +89,8 @@ Aider les utilisateurs à mieux taguer leurs questions techniques sur Stack Over
 
 - **Couverture** : proportion de questions où au moins un tag correct est prédit.  
 - **Précision@3** : proportion des 3 premiers tags prédits qui sont corrects.
+**Remarque** : Toutes les métriques sont calculées par rapport aux *tags filtrés* (`FilteredTags`), qui constituent l'ensemble de référence pour l'entraînement et l'évaluation du modèle.
+
 
 ---
             
@@ -189,9 +196,12 @@ if "error" not in res_catboost:
         tags_cat = res_catboost["predicted_tags"]
         st.markdown(render_tags_as_badges(tags_cat), unsafe_allow_html=True)
         coverage_cat = res_catboost.get("coverage", None)
-        precision_cat = res_catboost.get("precision_at_3", None)
+        precision_cat = res_catboost.get("precision", None)
         if coverage_cat is not None and precision_cat is not None:
-            st.markdown(f"📊 Couverture : {coverage_cat:.2f} | Precision@3 : {precision_cat:.2f}")
+            st.markdown(f"📊 Couverture : {'✅ Oui' if coverage_cat == 1.0 else '❌ Non'} (au moins un tag correct prédit pour cet exemple)")
+            st.markdown(f"📊 Précision sur les tags prédits : {precision_cat:.2f}"
+                        "(proportion de tags corrects parmi ceux proposés pour cet exemple)")  
+
 
 
 else:
@@ -209,9 +219,12 @@ if "error" not in res_nmf:
         st.markdown("<div style='font-size:18px; font-weight:bold; color:#000; margin-bottom:8px;'>Tags prédits (NMF) et métriques</div>", unsafe_allow_html=True)
         tags_nmf = res_nmf["predicted_tags"]
         st.markdown(render_tags_as_badges(tags_nmf), unsafe_allow_html=True)
-        coverage_nmf = coverage_score_true_pred([df_test.loc[i, "FilteredTags"]], [tags_nmf])
-        precision_nmf = precision_at_k_true_pred([df_test.loc[i, "FilteredTags"]], [tags_nmf], k=3)
-        st.markdown(f"📊 Couverture : {coverage_nmf:.2f} | Precision@3 : {precision_nmf:.2f}")
+        coverage_nmf = res_nmf.get("coverage", None)
+        precision_nmf = res_nmf.get("precision", None)
+        if coverage_nmf is not None and precision_nmf is not None:
+            st.markdown(f"📊 Couverture : {'✅ Oui' if coverage_nmf == 1.0 else '❌ Non'} (au moins un tag correct prédit pour cet exemple)")
+            st.markdown(f"📊 Précision sur les tags prédits : {precision_nmf:.2f} " 
+                        "(proportion de tags corrects parmi ceux proposés pour cet exemple)")
 else:
     st.error(f"Erreur NMF: {res_nmf['error']}")
 
