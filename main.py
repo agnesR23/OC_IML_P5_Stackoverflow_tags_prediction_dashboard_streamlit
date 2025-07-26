@@ -220,14 +220,7 @@ if "error" not in res_catboost:
         scores_cat = res_catboost.get("scores", {})
         filtered_tags_cat = [tag for tag, score in scores_cat.items() if score >= cb_threshold]
         
-        # --- DEBUG : Affichage des scores avant/après filtrage
-        if st.checkbox("🔍 Afficher debug Catboost (scores/filtrage)", key="debug_catboost"):
-            st.write("Scores Catboost bruts (tag: score):")
-            st.json(scores_cat)
-            st.write(f"Tags conservés avec threshold {cb_threshold}:")
-            st.write(filtered_tags_cat)
-
-        
+        # --- Affichage des tags filtrés
         st.markdown(f"**Threshold utilisé** : {cb_threshold:.2f}")
         if filtered_tags_cat:
             st.markdown(render_tags_as_badges(filtered_tags_cat), unsafe_allow_html=True)
@@ -267,15 +260,7 @@ if "error" not in res_nmf:
         scores_nmf = res_nmf.get("scores", {})
         filtered_tags_nmf = [tag for tag, score in scores_nmf.items() if score >= nmf_threshold]
         
-        # --- DEBUG : Affichage des scores avant/après filtrage
-        if st.checkbox("🔍 Afficher debug NMF (scores/filtrage)", key="debug_nmf"):
-            st.write("Scores NMF bruts (tag: score):")
-            st.json(scores_nmf)
-            st.write(f"Tags conservés avec threshold {nmf_threshold}:")
-            st.write(filtered_tags_nmf)
-
-        
-        
+        # --- Affichage des tags filtrés
         st.markdown(f"**Threshold utilisé** : {nmf_threshold:.2f}")
         if filtered_tags_nmf:
             st.markdown(render_tags_as_badges(filtered_tags_nmf), unsafe_allow_html=True)
