@@ -111,13 +111,24 @@ Soumettez votre propre question (titre + description) pour obtenir une prédicti
 st.subheader("📌 Partie 1 – Exemples issus du jeu de test : choisissez avec la barre de gauche")
 
 # --- Ajout du slider threshold dans les exemples prédéfinis
-ex_threshold = st.slider(
-    "Seuil de prédiction pour l’exemple sélectionné",
+st.sidebar.markdown("### Réglage des seuils de prédiction (exemples ci-dessous)")
+
+cb_threshold = st.sidebar.slider(
+    "Seuil CatBoost",
     min_value=0.0,
     max_value=1.0,
     value=DEFAULT_THRESHOLD,
     step=0.01,
-    key="ex_threshold"
+    key="catboost_threshold"
+)
+
+nmf_threshold = st.sidebar.slider(
+    "Seuil NMF",
+    min_value=0.0,
+    max_value=1.0,
+    value=DEFAULT_THRESHOLD,
+    step=0.01,
+    key="nmf_threshold"
 )
 
 
@@ -197,7 +208,7 @@ except Exception:
 res_catboost = call_api_predict(
     title=df_test.loc[i, "Title"],
     body=df_test.loc[i, "Body"],
-    threshold=ex_threshold,
+    threshold=cb_threshold,
     model_type="catboost",
     true_tags=true_tags
 )
@@ -244,7 +255,7 @@ else:
 res_nmf = call_api_predict(
     title=df_test.loc[i, "Title"],
     body=df_test.loc[i, "Body"],
-    threshold=ex_threshold,
+    threshold=nmf_threshold,
     model_type="nmf",
     true_tags=true_tags
 )
