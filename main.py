@@ -110,6 +110,17 @@ Soumettez votre propre question (titre + description) pour obtenir une prédicti
 
 st.subheader("📌 Partie 1 – Exemples issus du jeu de test : choisissez avec la barre de gauche")
 
+# --- Ajout du slider threshold dans les exemples prédéfinis
+ex_threshold = st.slider(
+    "Seuil de prédiction pour l’exemple sélectionné",
+    min_value=0.0,
+    max_value=1.0,
+    value=DEFAULT_THRESHOLD,
+    step=0.01,
+    key="ex_threshold"
+)
+
+
 # --------- Affichage des exemples ---------
 
 def render_tags_as_badges(tag_list):
@@ -186,22 +197,43 @@ except Exception:
 res_catboost = call_api_predict(
     title=df_test.loc[i, "Title"],
     body=df_test.loc[i, "Body"],
-    threshold=DEFAULT_THRESHOLD,
+    threshold=ex_threshold,
     model_type="catboost",
     true_tags=true_tags
 )
 if "error" not in res_catboost:
     with st.expander("📎 Afficher les prédictions CatBoost"):
         st.markdown("<div style='font-size:18px; font-weight:bold; color:#000; margin-bottom:8px;'>Tags prédits (CatBoost) et métriques</div>", unsafe_allow_html=True)
-        tags_cat = res_catboost["predicted_tags"]
-        st.markdown(render_tags_as_badges(tags_cat), unsafe_allow_html=True)
-        st.write("Debug réponse CatBoost:", res_catboost) 
-        coverage_cat = res_catboost.get("coverage", None)
-        precision_cat = res_catboost.get("precision", None)
-        if coverage_cat is not None and precision_cat is not None:
-            st.markdown(f"📊 Couverture : {'✅ Oui' if coverage_cat == 1.0 else '❌ Non'} (au moins un tag correct prédit pour cet exemple)")
-            st.markdown(f"📊 Précision sur les tags prédits : {precision_cat:.2f}"
-                        "(proportion de tags corrects parmi ceux proposés pour cet exemple)")  
+        
+        # --- Application du threshold sur les tags
+        scores_cat = res_catboost.get("scores", {})
+        filtered_tags_cat = [tag for tag, score in scores_cat.items() if score >= ex_threshold]
+        
+        # --- DEBUG : Affichage des scores avant/après filtrage
+        if st.checkbox("🔍 Afficher debug NMF (scores/filtrage)", key="debug_nmf"):
+            st.write("Scores NMF bruts (tag: score):")
+            st.json(scores_cat)
+            st.write(f"Tags conservés avec threshold {ex_threshold}:")
+            st.write(filtered_tags_nmf)
+
+        
+        st.markdown(f"**Threshold utilisé** : {ex_threshold:.2f}")
+        if filtered_tags_cat:
+            st.markdown(render_tags_as_badges(filtered_tags_cat), unsafe_allow_html=True)
+        else:
+            st.markdown(
+                "<div style='background-color:#f9d342; color:#5a3e00; padding:10px; border-radius:6px; font-weight:bold;'>"
+                "⚠️ Aucun tag prédit (CatBoost) avec ce seuil."
+                "</div>", unsafe_allow_html=True
+            )
+        # --- Métriques recalculées sur les tags filtrés
+        if true_tags and filtered_tags_cat:
+            n_correct = len(set(filtered_tags_cat) & set(true_tags))
+            coverage_cat = 1.0 if n_correct > 0 else 0.0
+            precision_cat = n_correct / len(filtered_tags_cat)
+            st.markdown(f"📊 Couverture : {'✅ Oui' if coverage_cat == 1.0 else '❌ Non'} (au moins un tag correct prédit)")
+            st.markdown(f"📊 Précision sur les tags prédits : {precision_cat:.2f} (proportion de tags corrects)")
+        
 
 
 
@@ -212,20 +244,43 @@ else:
 res_nmf = call_api_predict(
     title=df_test.loc[i, "Title"],
     body=df_test.loc[i, "Body"],
-    threshold=DEFAULT_THRESHOLD,
-    model_type="nmf"
+    threshold=ex_threshold,
+    model_type="nmf",
+    true_tags=true_tags
 )
 if "error" not in res_nmf:
     with st.expander("📎 Afficher les prédictions"):
         st.markdown("<div style='font-size:18px; font-weight:bold; color:#000; margin-bottom:8px;'>Tags prédits (NMF) et métriques</div>", unsafe_allow_html=True)
-        tags_nmf = res_nmf["predicted_tags"]
-        st.markdown(render_tags_as_badges(tags_nmf), unsafe_allow_html=True)
-        coverage_nmf = res_nmf.get("coverage", None)
-        precision_nmf = res_nmf.get("precision", None)
-        if coverage_nmf is not None and precision_nmf is not None:
-            st.markdown(f"📊 Couverture : {'✅ Oui' if coverage_nmf == 1.0 else '❌ Non'} (au moins un tag correct prédit pour cet exemple)")
-            st.markdown(f"📊 Précision sur les tags prédits : {precision_nmf:.2f} " 
-                        "(proportion de tags corrects parmi ceux proposés pour cet exemple)")
+        
+        # --- Application du threshold sur les tags
+        scores_nmf = res_nmf.get("scores", {})
+        filtered_tags_nmf = [tag for tag, score in scores_nmf.items() if score >= ex_threshold]
+        
+        # --- DEBUG : Affichage des scores avant/après filtrage
+        if st.checkbox("🔍 Afficher debug NMF (scores/filtrage)", key="debug_nmf"):
+            st.write("Scores NMF bruts (tag: score):")
+            st.json(scores_nmf)
+            st.write(f"Tags conservés avec threshold {ex_threshold}:")
+            st.write(filtered_tags_nmf)
+
+        
+        
+        st.markdown(f"**Threshold utilisé** : {ex_threshold:.2f}")
+        if filtered_tags_nmf:
+            st.markdown(render_tags_as_badges(filtered_tags_nmf), unsafe_allow_html=True)
+        else:
+            st.markdown(
+                "<div style='background-color:#f9d342; color:#5a3e00; padding:10px; border-radius:6px; font-weight:bold;'>"
+                "⚠️ Aucun tag prédit (NMF) avec ce seuil."
+                "</div>", unsafe_allow_html=True
+            )
+        # --- Métriques recalculées sur les tags filtrés
+        if true_tags and filtered_tags_nmf:
+            n_correct = len(set(filtered_tags_nmf) & set(true_tags))
+            coverage_nmf = 1.0 if n_correct > 0 else 0.0
+            precision_nmf = n_correct / len(filtered_tags_nmf)
+            st.markdown(f"📊 Couverture : {'✅ Oui' if coverage_nmf == 1.0 else '❌ Non'} (au moins un tag correct prédit)")
+            st.markdown(f"📊 Précision sur les tags prédits : {precision_nmf:.2f} (proportion de tags corrects)")
 else:
     st.error(f"Erreur NMF: {res_nmf['error']}")
 
