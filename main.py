@@ -205,13 +205,14 @@ except Exception:
 
 
 # Prédiction CatBoost
-res_catboost = call_api_predict(
-    title=df_test.loc[i, "Title"],
-    body=df_test.loc[i, "Body"],
-    threshold=cb_threshold,
-    model_type="catboost",
-    true_tags=true_tags
-)
+with st.spinner("⏳ Prédiction en cours…"):
+    res_catboost = call_api_predict(
+        title=df_test.loc[i, "Title"],
+        body=df_test.loc[i, "Body"],
+        threshold=cb_threshold,
+        model_type="catboost",
+        true_tags=true_tags
+    )
 if "error" not in res_catboost:
     with st.expander("📎 Afficher les prédictions CatBoost"):
         st.markdown("<div style='font-size:18px; font-weight:bold; color:#000; margin-bottom:8px;'>Tags prédits (CatBoost) et métriques</div>", unsafe_allow_html=True)
@@ -245,13 +246,14 @@ else:
     st.error(f"Erreur CatBoost: {res_catboost['error']}")
 
 # Prédiction NMF
-res_nmf = call_api_predict(
-    title=df_test.loc[i, "Title"],
-    body=df_test.loc[i, "Body"],
-    threshold=nmf_threshold,
-    model_type="nmf",
-    true_tags=true_tags
-)
+with st.spinner("⏳ Prédiction en cours…"):
+    res_nmf = call_api_predict(
+        title=df_test.loc[i, "Title"],
+        body=df_test.loc[i, "Body"],
+        threshold=nmf_threshold,
+        model_type="nmf",
+        true_tags=true_tags
+    )
 if "error" not in res_nmf:
     with st.expander("📎 Afficher les prédictions"):
         st.markdown("<div style='font-size:18px; font-weight:bold; color:#000; margin-bottom:8px;'>Tags prédits (NMF) et métriques</div>", unsafe_allow_html=True)
@@ -298,7 +300,8 @@ with st.form("manual_input"):
             st.warning("Veuillez remplir le titre et le corps.")
         else:
             # Prédiction CatBoost
-            res_catboost = call_api_predict(title=title, body=body, threshold=threshold, model_type="catboost")
+            with st.spinner("⏳ Prédiction en cours…"):
+                res_catboost = call_api_predict(title=title, body=body, threshold=threshold, model_type="catboost")
             if "error" not in res_catboost:
                 scores_cat = res_catboost.get("scores", {})
                 # Filtrage et tri des tags par score décroissant
@@ -319,7 +322,8 @@ with st.form("manual_input"):
                 st.error(f"Erreur CatBoost : {res_catboost['error']}")
 
             # Prédiction NMF
-            res_nmf = call_api_predict(title=title, body=body, threshold=threshold, model_type="nmf")
+            with st.spinner("⏳ Prédiction en cours…"):
+                res_nmf = call_api_predict(title=title, body=body, threshold=threshold, model_type="nmf")
             if "error" not in res_nmf:
                 scores_nmf = res_nmf.get("scores", {})
                 sorted_scores_nmf = dict(sorted(scores_nmf.items(), key=lambda x: x[1], reverse=True))
