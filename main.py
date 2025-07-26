@@ -287,7 +287,7 @@ st.divider()
 # --------- Entrée manuelle ---------
 
 
-st.subheader("✍️ Partie 2 – Tester votre propre question")
+st.subheader("✍️ Partie 2 – Testez votre propre question")
 
 with st.form("manual_input"):
     title = st.text_input("Titre de la question")
