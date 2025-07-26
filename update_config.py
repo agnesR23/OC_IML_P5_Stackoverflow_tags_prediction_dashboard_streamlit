@@ -1,3 +1,9 @@
+# Script pour mettre à jour le fichier config.json avec l'URL de l'API
+# Script dans dossier app_streamlit :
+
+# python3 update_config.py
+
+
 import subprocess
 import json
 
