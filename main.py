@@ -221,8 +221,8 @@ if "error" not in res_catboost:
         filtered_tags_cat = [tag for tag, score in scores_cat.items() if score >= cb_threshold]
         
         # --- DEBUG : Affichage des scores avant/après filtrage
-        if st.checkbox("🔍 Afficher debug NMF (scores/filtrage)", key="debug_catboost"):
-            st.write("Scores NMF bruts (tag: score):")
+        if st.checkbox("🔍 Afficher debug Catboost (scores/filtrage)", key="debug_catboost"):
+            st.write("Scores Catboost bruts (tag: score):")
             st.json(scores_cat)
             st.write(f"Tags conservés avec threshold {cb_threshold}:")
             st.write(filtered_tags_cat)
@@ -243,7 +243,7 @@ if "error" not in res_catboost:
             coverage_cat = 1.0 if n_correct > 0 else 0.0
             precision_cat = n_correct / len(filtered_tags_cat)
             st.markdown(f"📊 Couverture : {'✅ Oui' if coverage_cat == 1.0 else '❌ Non'} (au moins un tag correct prédit)")
-            st.markdown(f"📊 Précision sur les tags prédits : {precision_cat:.2f} (proportion de tags corrects)")
+            st.markdown(f"📊 Précision sur les tags prédits : {precision_cat:.2f} (proportion de tags corrects parmi les tags prédits)")
         
 
 
@@ -291,7 +291,7 @@ if "error" not in res_nmf:
             coverage_nmf = 1.0 if n_correct > 0 else 0.0
             precision_nmf = n_correct / len(filtered_tags_nmf)
             st.markdown(f"📊 Couverture : {'✅ Oui' if coverage_nmf == 1.0 else '❌ Non'} (au moins un tag correct prédit)")
-            st.markdown(f"📊 Précision sur les tags prédits : {precision_nmf:.2f} (proportion de tags corrects)")
+            st.markdown(f"📊 Précision sur les tags prédits : {precision_nmf:.2f} (proportion de tags corrects parmi les tags prédits)")
 else:
     st.error(f"Erreur NMF: {res_nmf['error']}")
 
